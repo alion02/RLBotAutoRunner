@@ -20,12 +20,14 @@ namespace RLBotAutoRunner
             {
                 if (iniStructure.TryGetValue(groupKey, out var group) && group.TryGetValue(valueKey, out var value))
                     return value;
-                else return null;
+
+                return null;
             }
             set
             {
                 if (!iniStructure.TryGetValue(groupKey, out var group))
                     iniStructure.Add(groupKey, group = new Section());
+
                 group[valueKey] = value;
             }
         }
@@ -34,6 +36,7 @@ namespace RLBotAutoRunner
         {
             if (!iniStructure.TryGetValue(groupKey, out var group))
                 iniStructure.Add(groupKey, group = new Section());
+
             foreach (var (Key, Value) in pairs)
                 group[Key] = Value;
         }
@@ -64,18 +67,17 @@ namespace RLBotAutoRunner
             var sb = new StringBuilder();
             foreach (var group in iniStructure)
             {
-                sb.Append('[');
-                sb.Append(group.Key);
-                sb.Append(']');
-                sb.AppendLine();
+                sb.AppendLine($"[{group.Key}]");
+
                 foreach (var value in group.Value)
                 {
                     sb.Append(value.Key);
+
                     if (mode == INIMode.CompactEquals)
                         sb.Append('=');
                     else sb.Append(" = ");
-                    sb.Append(value.Value);
-                    sb.AppendLine();
+                    
+                    sb.AppendLine(value.Value);
                 }
             }
             return sb.ToString();

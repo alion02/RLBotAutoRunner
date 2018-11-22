@@ -9,7 +9,7 @@ namespace RLBotAutoRunner
 {
     public class Match
     {
-        public static MatchResult Run(Team blue, Team orange, INIParser baseIni)
+        public static (int BlueScore, int OrangeScore) Run(Team blue, Team orange, INIParser baseIni)
         {
             Console.WriteLine($"Starting match: {blue.Name} vs {orange.Name}");
 
@@ -50,8 +50,6 @@ namespace RLBotAutoRunner
 
             Console.WriteLine("Match ended. Shutting down...");
             Keyboard.SendKeystroke(Keys.Q, rlbot.MainWindowHandle);
-            //rlbot.StandardInput.Write('q');
-            //rlbot.StandardInput.WriteLine('y');
             if (!rlbot.WaitForExit(8000))
             {
                 Console.WriteLine("Injector unresponsive, trying harder...");
@@ -69,7 +67,7 @@ namespace RLBotAutoRunner
                     res.Stop();
 
             // TODO: Read in score from the file and return it
-            return new MatchResult();
+            return (0, 0);
         }
     }
 }

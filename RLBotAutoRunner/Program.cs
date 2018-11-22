@@ -24,23 +24,28 @@ namespace RLBotAutoRunner
             {
                 var dir = Path.GetDirectoryName(file);
                 string FullPath(string path) => Path.GetFullPath(Path.Combine(dir, path));
+
                 var ini = new INIParser(file, INIMode.SpacedEquals);
-                Console.WriteLine($"{file}:");
+                Console.WriteLine($"Stripped contents of '{file}':");
                 Console.WriteLine(ini.ToString(INIMode.SpacedEquals));
+
                 var name = ini[botFilter, "team"];
                 var cfgs = ini[botFilter, "cfgs"];
                 var sel = ini[botFilter, "cfg_selection"];
                 var res = ini[botFilter, "resources"];
                 var size = ini[botFilter, "size"];
+
                 if (name?.Length > 0 && cfgs?.Length > 0)
                 {
                     var parsedRes = new List<IUniqueResource>();
                     foreach (var r in res != null ? res.Split(';') : new string[0])
                         if (UniqueResource.TryParse(FullPath(r), out var p))
                             parsedRes.Add(p);
+
                     var fullCfgs = cfgs.Split(';');
                     for (int i = 0; i < fullCfgs.Length; ++i)
                         fullCfgs[i] = FullPath(fullCfgs[i]);
+
                     teams.Add(new Team(
                         name,
                         int.TryParse(size, out var desiredSize) && (sizeOverride == SizeOverride.Any || (sizeOverride == SizeOverride.HandicapOnly && desiredSize < teamSize)) ? desiredSize : teamSize,

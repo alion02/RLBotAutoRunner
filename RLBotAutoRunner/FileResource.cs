@@ -28,12 +28,15 @@ namespace RLBotAutoRunner
         {
             if (started)
             {
-                Console.WriteLine($"Stopping unique resource '{path}'...");
-                process.CloseMainWindow();
-                if (!process.WaitForExit(5000)) // TODO: Close processes asynchronously
+                if (!process.HasExited)
                 {
-                    Console.WriteLine("Unresponsive, killing...");
-                    process.Kill();
+                    Console.WriteLine($"Stopping unique resource '{path}'...");
+                    process.CloseMainWindow();
+                    if (!process.WaitForExit(5000)) // TODO: Close processes asynchronously
+                    {
+                        Console.WriteLine("Unresponsive, killing...");
+                        process.Kill();
+                    }
                 }
                 process.Dispose();
                 started = false;
@@ -52,6 +55,7 @@ namespace RLBotAutoRunner
             var n = new FileResource(fullPath);
             if (UniqueResource.Global.TryGetValue(n, out var s))
                 return (FileResource)s;
+
             return n;
         }
     }
