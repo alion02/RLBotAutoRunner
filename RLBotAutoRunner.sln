@@ -5,6 +5,12 @@ VisualStudioVersion = 15.0.28010.2046
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RLBotAutoRunner", "RLBotAutoRunner\RLBotAutoRunner.csproj", "{D4A38BFF-6A62-4B8A-A3A0-BE3FBE870D84}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Example", "Example", "{A3DEF1ED-FC2C-474B-8218-BA1F60C70274}"
+	ProjectSection(SolutionItems) = preProject
+		example.cfg = example.cfg
+		example.metadata = example.metadata
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

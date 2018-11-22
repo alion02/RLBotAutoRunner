@@ -1,0 +1,41 @@
+; This is a sample metadata file.
+; It tells the autorunner how to set a team up.
+; To be recognized, each team of bots must have one.
+
+; Every metadata file can contain any number of sections.
+; The autorunner searches for specific sections based on the config file fed into it.
+; Teams without the correct section are ignored.
+; This is useful for teams that want to participate in multiple brackets.
+[Bracket Name]
+
+; The team name; self-explanatory.
+team = Creatures of the Dorm
+
+; A colon-separated list of config files.
+; These config file paths MUST be relative to the metadata file!
+cfgs = Fly\fly.cfg;Cockroach\cockroach.cfg;Spider\spider.cfg
+
+; A colon-separated list of additional resources to load.
+; For example, you should put C# .exe files and Java .bat files here.
+; As with config files, these paths MUST be relative to the metadata file!
+resources = Cockroach\bin\Cockroach.bat;Spider\Spider.exe
+
+; OPTIONAL: Config file selection method.
+; Defaults to "SequentialRepeat", accepted values are:
+; "FirstOnly" - select the first config file.
+; "SequentialRepeat" - select config files in order; upon reaching the end, wrap around.
+; "SequentialThrow" - select config files in order; upon reaching the end, complain about an invalid configuration.
+; "RandomUniqueRepeat" - select config files in a random order, without repeating any; only start repeating after exhausting all config files.
+; "RandomUniqueThrow" - select config files in a random order, without repeating any; complain about an invalid configuration after exhausting all config files.
+; "Random" - select config files in a random order.
+cfg_selection = SequentialRepeat
+
+; OPTIONAL: A team size.
+; This is usually ignored by the autorunner (because it's defined in the tournament configuration).
+; Otherwise, it sets the team size to the desired amount.
+size = 3
+
+[Another Bracket Name]
+team = Creatures of the Dorm
+cfgs = Fly\fly.cfg;Spider\spider.cfg
+resources = Spider\Spider.exe
