@@ -2,14 +2,24 @@
 using System.IO;
 using System.Text;
 using System.Diagnostics;
+using System.Threading;
 using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace RLBotAutoRunner
 {
-    public class Match
+    public class MatchRunner
     {
-        public static (int BlueScore, int OrangeScore) Run(Team blue, Team orange, INIParser baseIni)
+        public MatchRunner(INIParser baseIni, TimeSpan? breakLength = null)
+        {
+            this.baseIni = baseIni;
+            this.breakLength = breakLength ?? TimeSpan.Zero;
+        }
+
+        private readonly INIParser baseIni;
+        private readonly TimeSpan breakLength;
+
+        public (int BlueScore, int OrangeScore) Run(Team blue, Team orange)
         {
             Console.WriteLine($"Starting match: {blue.Name} vs {orange.Name}");
 
@@ -48,6 +58,8 @@ namespace RLBotAutoRunner
             var watcher = new FileSystemWatcher(demos);
             var file = watcher.WaitForChanged(WatcherChangeTypes.Created).Name;
 
+            var sw = new Stopwatch();
+
             Console.WriteLine("Match ended. Shutting down...");
             Keyboard.SendKeystroke(Keys.Q, rlbot.MainWindowHandle);
             if (!rlbot.WaitForExit(8000))
@@ -65,6 +77,10 @@ namespace RLBotAutoRunner
             foreach (var team in teams)
                 foreach (var res in team.Resources)
                     res.Stop();
+
+            var sleepTime = breakLength - sw.Elapsed;
+            if (sleepTime > TimeSpan.Zero)
+                Thread.Sleep(sleepTime);
 
             // TODO: Read in score from the file and return it
             return (0, 0);
