@@ -9,10 +9,7 @@ namespace RLBotAutoRunner
         static void Main(string[] args)
         {
             if (args.Length != 1)
-            {
-                Console.Error.WriteLine($"Received {args.Length} arguments, expected 1. Usage: 'RLBotAutorunner.exe <path to configuration file>'");
-                return;
-            }
+                throw new ArgumentException($"Received {args.Length} arguments, expected 1. Usage: 'RLBotAutorunner.exe <path to configuration file>'");
 
             var modeIni = new INIParser(args[0], INIMode.SpacedEquals);
             var botFilter = modeIni["Autorunner Configuration", "header_filter"];
@@ -26,7 +23,7 @@ namespace RLBotAutoRunner
                 string FullPath(string path) => Path.GetFullPath(Path.Combine(dir, path));
 
                 var ini = new INIParser(file, INIMode.SpacedEquals);
-                Console.WriteLine($"Stripped contents of '{file}':");
+                Console.WriteLine($"Found metadata file. Stripped contents of '{file}':");
                 Console.WriteLine(ini.ToString(INIMode.SpacedEquals));
 
                 var name = ini[botFilter, "team"];
@@ -37,6 +34,9 @@ namespace RLBotAutoRunner
 
                 if (name?.Length > 0 && cfgs?.Length > 0)
                 {
+                    // TODO: Error handling
+                    Console.WriteLine("Metadata file contains appropriate section. Adding to list of participants...");
+
                     var parsedRes = new List<IUniqueResource>();
                     foreach (var r in res != null ? res.Split(';') : new string[0])
                         if (UniqueResource.TryParse(FullPath(r), out var p))
