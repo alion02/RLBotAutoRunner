@@ -14,9 +14,10 @@ namespace RLBotAutoRunner
             var modeIni = new INIParser(args[0], INIMode.SpacedEquals);
             var botFilter = modeIni["Autorunner Configuration", "header_filter"];
             var teamSize = int.Parse(modeIni["Autorunner Configuration", "team_size"]);
-            var breakLength = new TimeSpan((long)(double.Parse(modeIni["Autorunner Configuration", "break_length"]) * TimeSpan.TicksPerSecond));
+            var breakLengthParsed = double.TryParse(modeIni["Autorunner Configuration", "break_length"], out var breakLengthSeconds);
             Enum.TryParse(modeIni["Autorunner Configuration", "size_override"], out SizeOverride sizeOverride);
-            
+            var tourneyType = modeIni["Tournament Configuration", "type"];
+
             var teams = new List<Team>();
             foreach (var file in Directory.EnumerateFiles(@".\", "*.metadata", SearchOption.AllDirectories))
             {
@@ -56,8 +57,7 @@ namespace RLBotAutoRunner
                 }
             }
 
-            var tourneyType = modeIni["Tournament Configuration", "type"];
-            var matchRunner = new MatchRunner(modeIni, breakLength);
+            var matchRunner = new MatchRunner(modeIni, breakLengthParsed ? new TimeSpan((long)(breakLengthSeconds * TimeSpan.TicksPerSecond)) : TimeSpan.Zero);
             switch (Enum.TryParse(tourneyType, out TourneyType type) ? type : throw new InvalidDataException($"Configuration requested tournament type '{tourneyType}', which doesn't exist."))
             {
                 case TourneyType.RoundRobin:
@@ -65,6 +65,7 @@ namespace RLBotAutoRunner
                         for (int j = i + 1; j < teams.Count; ++j)
                             matchRunner.Run(teams[i], teams[j]);
                     break;
+
                 default:
                     break;
             }
