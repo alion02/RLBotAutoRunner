@@ -149,7 +149,13 @@ namespace RLBotAutoRunner
 
         enum TourneyType
         {
-            RoundRobin
+            RoundRobin,
+            SingleElim,
+            DoubleElim,
+            Swiss,
+            Gauntlet,
+            Random,
+            Manual
         }
 
         public static readonly Random Random = new Random();
