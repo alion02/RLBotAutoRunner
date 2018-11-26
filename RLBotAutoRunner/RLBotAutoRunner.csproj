@@ -65,6 +65,8 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="FileResource.cs" />
     <Compile Include="Keyboard.cs" />
+    <Compile Include="MatchResult.cs" />
+    <Compile Include="Tournament.cs" />
     <Compile Include="UniqueResource.cs" />
     <Compile Include="INIParser.cs" />
     <Compile Include="MatchRunner.cs" />

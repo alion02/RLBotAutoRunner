@@ -19,7 +19,7 @@ namespace RLBotAutoRunner
         private readonly INIParser baseIni;
         private readonly TimeSpan breakLength;
 
-        public (int BlueScore, int OrangeScore) Run(Team blue, Team orange)
+        public MatchResult Run(Team blue, Team orange)
         {
             Console.WriteLine($"Starting match: {blue.Name} vs {orange.Name}");
 
@@ -83,7 +83,7 @@ namespace RLBotAutoRunner
                 Thread.Sleep(sleepTime);
 
             // TODO: Read in score from the file and return it
-            return (0, 0);
+            return new MatchResult(blue, orange, 0, 0);
         }
     }
 }

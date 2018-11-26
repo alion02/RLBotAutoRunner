@@ -13,12 +13,15 @@ namespace RLBotAutoRunner
                 if (args.Length != 1)
                     throw new ArgumentException($"Received {args.Length} arguments, expected 1. Usage: 'RLBotAutorunner.exe <path to configuration file>'");
 
-                var modeIni = new INIParser(args[0], INIMode.SpacedEquals);
-                var botFilter = modeIni["Autorunner Configuration", "header_filter"];
-                var teamSize = int.Parse(modeIni["Autorunner Configuration", "team_size"]);
-                var breakLengthParsed = double.TryParse(modeIni["Autorunner Configuration", "break_length"], out var breakLengthSeconds);
-                Enum.TryParse(modeIni["Autorunner Configuration", "size_override"], out SizeOverride sizeOverride);
-                var tourneyType = modeIni["Tournament Configuration", "type"];
+                var config = new INIParser(args[0], INIMode.SpacedEquals);
+                var botFilter = config["Autorunner Configuration", "header_filter"];
+                var teamSize = int.Parse(config["Autorunner Configuration", "team_size"]);
+                var breakLengthParsed = double.TryParse(config["Autorunner Configuration", "break_length"], out var breakLengthSeconds);
+                Enum.TryParse(config["Autorunner Configuration", "size_override"], out SizeOverride sizeOverride);
+                var tourneyTypeString = config["Tournament Configuration", "type"];
+
+                var matchRunner = new MatchRunner(config, breakLengthParsed ? new TimeSpan((long)(breakLengthSeconds * TimeSpan.TicksPerSecond)) : TimeSpan.Zero);
+                var tourneyType = Enum.TryParse(tourneyTypeString, out Tournament.Type type) ? type : throw new InvalidDataException($"Configuration specified tournament type '{tourneyTypeString}', which doesn't exist.");
 
                 Console.WriteLine($"Searching for metadata files containing section '[{botFilter}]'...\n");
                 var teams = new List<Team>();
@@ -59,19 +62,8 @@ namespace RLBotAutoRunner
                         ));
                     }
                 }
-
-                var matchRunner = new MatchRunner(modeIni, breakLengthParsed ? new TimeSpan((long)(breakLengthSeconds * TimeSpan.TicksPerSecond)) : TimeSpan.Zero);
-                switch (Enum.TryParse(tourneyType, out TourneyType type) ? type : throw new InvalidDataException($"Configuration specified tournament type '{tourneyType}', which doesn't exist."))
-                {
-                    case TourneyType.RoundRobin:
-                        for (int i = 0; i < teams.Count; ++i)
-                            for (int j = i + 1; j < teams.Count; ++j)
-                                matchRunner.Run(teams[i], teams[j]);
-                        break;
-
-                    default:
-                        break;
-                }
+                
+                Tournament.Run(teams.ToArray(), matchRunner, tourneyType, config);
             }
             catch (Exception e)
             {
@@ -156,17 +148,6 @@ namespace RLBotAutoRunner
             Random,
             CustomRepeat,
             CustomThrow
-        }
-
-        enum TourneyType
-        {
-            RoundRobin,
-            SingleElim,
-            DoubleElim,
-            Swiss,
-            Gauntlet,
-            Random,
-            Manual
         }
 
         public static readonly Random Random = new Random();
