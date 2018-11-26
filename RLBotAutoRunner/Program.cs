@@ -8,66 +8,74 @@ namespace RLBotAutoRunner
     {
         static void Main(string[] args)
         {
-            if (args.Length != 1)
-                throw new ArgumentException($"Received {args.Length} arguments, expected 1. Usage: 'RLBotAutorunner.exe <path to configuration file>'");
-
-            var modeIni = new INIParser(args[0], INIMode.SpacedEquals);
-            var botFilter = modeIni["Autorunner Configuration", "header_filter"];
-            var teamSize = int.Parse(modeIni["Autorunner Configuration", "team_size"]);
-            var breakLengthParsed = double.TryParse(modeIni["Autorunner Configuration", "break_length"], out var breakLengthSeconds);
-            Enum.TryParse(modeIni["Autorunner Configuration", "size_override"], out SizeOverride sizeOverride);
-            var tourneyType = modeIni["Tournament Configuration", "type"];
-
-            var teams = new List<Team>();
-            foreach (var file in Directory.EnumerateFiles(@".\", "*.metadata", SearchOption.AllDirectories))
+            try
             {
-                var dir = Path.GetDirectoryName(file);
-                string FullPath(string path) => Path.GetFullPath(Path.Combine(dir, path));
+                if (args.Length != 1)
+                    throw new ArgumentException($"Received {args.Length} arguments, expected 1. Usage: 'RLBotAutorunner.exe <path to configuration file>'");
 
-                var ini = new INIParser(file, INIMode.SpacedEquals);
-                Console.WriteLine($"Found metadata file. Stripped contents of '{file}':");
-                Console.WriteLine(ini.ToString(INIMode.SpacedEquals));
+                var modeIni = new INIParser(args[0], INIMode.SpacedEquals);
+                var botFilter = modeIni["Autorunner Configuration", "header_filter"];
+                var teamSize = int.Parse(modeIni["Autorunner Configuration", "team_size"]);
+                var breakLengthParsed = double.TryParse(modeIni["Autorunner Configuration", "break_length"], out var breakLengthSeconds);
+                Enum.TryParse(modeIni["Autorunner Configuration", "size_override"], out SizeOverride sizeOverride);
+                var tourneyType = modeIni["Tournament Configuration", "type"];
 
-                var name = ini[botFilter, "team"];
-                var cfgs = ini[botFilter, "cfgs"];
-                var sel = ini[botFilter, "cfg_selection"];
-                var res = ini[botFilter, "resources"];
-                var size = ini[botFilter, "size"];
-
-                if (name?.Length > 0 && cfgs?.Length > 0)
+                Console.WriteLine($"Searching for metadata files containing section '[{botFilter}]'...\n");
+                var teams = new List<Team>();
+                foreach (var file in Directory.EnumerateFiles(@".\", "*.metadata", SearchOption.AllDirectories))
                 {
-                    // TODO: Error handling
-                    Console.WriteLine("Metadata file contains appropriate section. Adding to list of participants...");
+                    var dir = Path.GetDirectoryName(file);
+                    string FullPath(string path) => Path.GetFullPath(Path.Combine(dir, path));
 
-                    var parsedRes = new List<IUniqueResource>();
-                    foreach (var r in res != null ? res.Split(';') : new string[0])
-                        if (UniqueResource.TryParse(FullPath(r), out var p))
-                            parsedRes.Add(p);
+                    var ini = new INIParser(file, INIMode.SpacedEquals);
+                    Console.WriteLine($"Found metadata file '{file}'. Showing stripped contents:");
+                    Console.WriteLine(ini.ToString(INIMode.SpacedEquals));
 
-                    var fullCfgs = cfgs.Split(';');
-                    for (int i = 0; i < fullCfgs.Length; ++i)
-                        fullCfgs[i] = FullPath(fullCfgs[i]);
+                    var name = ini[botFilter, "team"];
+                    var cfgs = ini[botFilter, "cfgs"];
+                    var sel = ini[botFilter, "cfg_selection"];
+                    var res = ini[botFilter, "resources"];
+                    var size = ini[botFilter, "size"];
 
-                    teams.Add(new Team(
-                        name,
-                        int.TryParse(size, out var desiredSize) && (sizeOverride == SizeOverride.Any || (sizeOverride == SizeOverride.HandicapOnly && desiredSize < teamSize)) ? desiredSize : teamSize,
-                        GetCfgPool(Enum.TryParse(sel, out CfgSelectionMode desiredSel) ? desiredSel : CfgSelectionMode.SequentialRepeat, fullCfgs),
-                        parsedRes
-                    ));
+                    if (name?.Length > 0 && cfgs?.Length > 0)
+                    {
+                        // TODO: Error handling
+                        Console.WriteLine($"Metadata file contains appropriate section. Adding '{name}' to list of participants...");
+
+                        var parsedRes = new List<IUniqueResource>();
+                        foreach (var r in res != null ? res.Split(';') : new string[0])
+                            if (UniqueResource.TryParse(FullPath(r), out var p))
+                                parsedRes.Add(p);
+
+                        var fullCfgs = cfgs.Split(';');
+                        for (int i = 0; i < fullCfgs.Length; ++i)
+                            fullCfgs[i] = FullPath(fullCfgs[i]);
+
+                        teams.Add(new Team(
+                            name,
+                            int.TryParse(size, out var desiredSize) && (sizeOverride == SizeOverride.Any || (sizeOverride == SizeOverride.HandicapOnly && desiredSize < teamSize)) ? desiredSize : teamSize,
+                            GetCfgPool(Enum.TryParse(sel, out CfgSelectionMode desiredSel) ? desiredSel : CfgSelectionMode.SequentialRepeat, fullCfgs),
+                            parsedRes
+                        ));
+                    }
+                }
+
+                var matchRunner = new MatchRunner(modeIni, breakLengthParsed ? new TimeSpan((long)(breakLengthSeconds * TimeSpan.TicksPerSecond)) : TimeSpan.Zero);
+                switch (Enum.TryParse(tourneyType, out TourneyType type) ? type : throw new InvalidDataException($"Configuration specified tournament type '{tourneyType}', which doesn't exist."))
+                {
+                    case TourneyType.RoundRobin:
+                        for (int i = 0; i < teams.Count; ++i)
+                            for (int j = i + 1; j < teams.Count; ++j)
+                                matchRunner.Run(teams[i], teams[j]);
+                        break;
+
+                    default:
+                        break;
                 }
             }
-
-            var matchRunner = new MatchRunner(modeIni, breakLengthParsed ? new TimeSpan((long)(breakLengthSeconds * TimeSpan.TicksPerSecond)) : TimeSpan.Zero);
-            switch (Enum.TryParse(tourneyType, out TourneyType type) ? type : throw new InvalidDataException($"Configuration requested tournament type '{tourneyType}', which doesn't exist."))
+            catch (Exception e)
             {
-                case TourneyType.RoundRobin:
-                    for (int i = 0; i < teams.Count; ++i)
-                        for (int j = i + 1; j < teams.Count; ++j)
-                            matchRunner.Run(teams[i], teams[j]);
-                    break;
-
-                default:
-                    break;
+                Console.Error.WriteLine(e.Message);
             }
         }
 
@@ -110,7 +118,7 @@ namespace RLBotAutoRunner
                 foreach (var cfg in source)
                     yield return cfg;
 
-                throw new InvalidOperationException("A request was made for more cfgs than provided by entry.");
+                throw new InvalidOperationException("A request was made for more configs than provided by entry.");
             }
             switch (mode)
             {
