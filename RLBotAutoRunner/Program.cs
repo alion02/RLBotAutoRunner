@@ -11,8 +11,9 @@ namespace RLBotAutoRunner
             try
             {
                 if (args.Length != 1)
-                    throw new ArgumentException($"Received {args.Length} arguments, expected 1. Usage: 'RLBotAutorunner.exe <path to configuration file>'");
+                    throw new ArgumentException($"Received {args.Length} arguments, expected 1. Usage: 'RLBotAutoRunner.exe <path to configuration file>'");
 
+                // TODO: Detect and report invalid config
                 var config = new INIParser(args[0], INIMode.SpacedEquals);
                 var botFilter = config["Autorunner Configuration", "header_filter"];
                 var teamSize = int.Parse(config["Autorunner Configuration", "team_size"]);
