@@ -16,6 +16,17 @@ namespace RLBotAutoRunner
                             yield return runner.Run(teams[i], teams[j]);
                     break;
 
+                case Type.Gauntlet:
+                    var challengerName = config["Tournament Config", "challenger"];
+                    var challengerIndex = Array.FindIndex(teams, t => t.Name == challengerName);
+                    var challenger = teams[challengerIndex];
+
+                    for (int i = 0; i < challengerIndex; ++i)
+                        yield return runner.Run(challenger, teams[i]);
+                    for (int i = challengerIndex + 1; i < teams.Length; ++i)
+                        yield return runner.Run(challenger, teams[i]);
+                    break;
+
                 default:
                     break;
             }
